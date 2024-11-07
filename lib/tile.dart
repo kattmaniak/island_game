@@ -68,7 +68,7 @@ class _TileState extends State<Tile> {
     if (height <= 0) {
       color = Colors.blue;
     } else if (height <= 200) {
-      color = Colors.yellow[(height ~/ 100) * 100];
+      color = Colors.yellow[(height ~/ 100) * 100 + 100];
     } else if (height <= 400) {
       color = Colors.green[(height ~/ 100) * 100 + 200];
     } else if (height <= 800) {

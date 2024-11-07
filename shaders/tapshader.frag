@@ -21,5 +21,12 @@ void main() {
         fragColor = color;
         return;
     }
-    fragColor = vec4(success ? 0.0 : 1.0, success ? 1.0 : 0.0, 0.0, 1.0);
+    fragColor = color;
+    if(success){
+        fragColor.g = 1.0;
+    } else {
+        fragColor.r = 1.0;
+         fragColor.g = color.g * 0.5;
+         fragColor.b = color.b * 0.5;
+    }
 }
