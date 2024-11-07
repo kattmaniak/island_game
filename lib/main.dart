@@ -1,7 +1,9 @@
 import 'dart:convert';
 import 'dart:io';
 import 'dart:math';
+import 'package:http/http.dart' as http;
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'game.dart';
 import 'island.dart';
@@ -70,11 +72,16 @@ class MyHomePageState extends State<MyHomePage> {
   }
 
   Future<void> _init() async {
-    var client = HttpClient();
-    HttpClientRequest request = await client.getUrl(
-        Uri.parse("https://jobfair.nordeus.com/jf24-fullstack-challenge/test"));
-    HttpClientResponse response = await request.close();
-    String responseBody = await response.transform(const Utf8Decoder()).join();
+    String responseBody;
+    if(!kIsWeb) {
+      var client = HttpClient();
+      HttpClientRequest request = await client.getUrl(
+          Uri.parse("https://jobfair.nordeus.com/jf24-fullstack-challenge/test"));
+      HttpClientResponse response = await request.close();
+      responseBody = await response.transform(const Utf8Decoder()).join();
+    } else {
+      responseBody = await http.read(Uri.parse("https://corsproxy.io/?https%3A%2F%2Fjobfair.nordeus.com%2Fjf24-fullstack-challenge%2Ftest%2F"));
+    }
 
     List<List<int>> map = List.generate(30, (_) => List.filled(30, 0));
 
