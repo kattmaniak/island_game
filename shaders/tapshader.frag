@@ -24,9 +24,11 @@ void main() {
     fragColor = color;
     if(success){
         fragColor.g = 1.0;
+        fragColor.b = color.b * 0.6;
+        fragColor.r = color.r * 0.6;
     } else {
         fragColor.r = 1.0;
-         fragColor.g = color.g * 0.5;
-         fragColor.b = color.b * 0.5;
+        fragColor.g = color.g * 0.6;
+        fragColor.b = color.b * 0.6;
     }
 }

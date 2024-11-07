@@ -4,14 +4,15 @@ import 'tile.dart';
 import 'game.dart';
 
 class Island {
-  Island(this.game);
-  Game game;
+  Island(this._game);
+  Game _game;
 
   List<Tile> tiles = List.empty(growable: true);
-  int averageHeight = 0;
-  Ticker? ticker;
-  Duration currentTime = Duration.zero;
-  bool success = false;
+  int _averageHeight = 0;
+  Ticker? _ticker;
+  Duration _currentTime = Duration.zero;
+  bool _success = false;
+  bool _tapped = false;
 
   void addTile(Tile tile) {
     tiles.add(tile);
@@ -22,39 +23,40 @@ class Island {
     for (var tile in tiles) {
       sum += tile.height;
     }
-    averageHeight = sum ~/ tiles.length;
+    _averageHeight = sum ~/ tiles.length;
   }
 
   int getAverageHeight() {
-    return averageHeight;
+    return _averageHeight;
   }
 
   void tapped(double x, double y) {
-    if (game.isFinished()) {
+    if (_game.isFinished() || _tapped) {
       return;
     }
-    game.useAttempt();
-    if (success) game.setSuccess(true);
-    ticker = Ticker((Duration elapsed) {
-      currentTime = elapsed;
+    _tapped = true;
+    _game.useAttempt();
+    if (_success) _game.setSuccess(true);
+    _ticker = Ticker((Duration elapsed) {
+      _currentTime = elapsed;
       for (var tile in tiles) {
-        tile.setTime(currentTime);
+        tile.setTime(_currentTime);
         tile.setXY(x, y);
       }
-      if (currentTime.inSeconds >= 10) {
-        ticker!.stop();
+      if (_currentTime.inSeconds >= 10) {
+        _ticker!.stop();
       }
     });
-    ticker!.start();
+    _ticker!.start();
   }
 
   void dispose() {
-    ticker?.stop();
-    ticker?.dispose();
+    _ticker?.stop();
+    _ticker?.dispose();
   }
 
   void setSuccess(bool success) {
-    this.success = success;
+    this._success = success;
     for (var tile in tiles) {
       tile.setSuccess(success);
     }

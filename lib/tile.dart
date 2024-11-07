@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_shaders/flutter_shaders.dart';
 import 'island.dart';
 
+// ignore: must_be_immutable
 class Tile extends StatefulWidget {
   Tile({super.key, required this.height, this.island}) {
     state = _TileState(height: height, island: island);

@@ -139,7 +139,7 @@ class MyHomePageState extends State<MyHomePage> {
         }
         island.calculateAverageHeight();
         islands.add(island);
-        if (max == null || island.averageHeight > max.averageHeight) {
+        if (max == null || island.getAverageHeight() > max.getAverageHeight()) {
           max = island;
         }
       }
