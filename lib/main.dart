@@ -1,8 +1,11 @@
 import 'dart:convert';
 import 'dart:io';
+import 'dart:math';
 
 import 'package:flutter/material.dart';
+import 'game.dart';
 import 'island.dart';
+import 'tile.dart';
 
 void main() {
   runApp(const MyApp());
@@ -10,59 +13,60 @@ void main() {
 
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
-
-  // This widget is the root of your application.
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'Flutter Demo',
       theme: ThemeData(
-        // This is the theme of your application.
-        //
-        // TRY THIS: Try running your application with "flutter run". You'll see
-        // the application has a purple toolbar. Then, without quitting the app,
-        // try changing the seedColor in the colorScheme below to Colors.green
-        // and then invoke "hot reload" (save your changes or press the "hot
-        // reload" button in a Flutter-supported IDE, or press "r" if you used
-        // the command line to start the app).
-        //
-        // Notice that the counter didn't reset back to zero; the application
-        // state is not lost during the reload. To reset the state, use hot
-        // restart instead.
-        //
-        // This works for code too, not just values: Most code changes can be
-        // tested with just a hot reload.
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
         useMaterial3: true,
       ),
-      home: const MyHomePage(title: 'Flutter Demo Home Page'),
+      home: const MyHomePage(),
     );
   }
 }
 
 class MyHomePage extends StatefulWidget {
-  const MyHomePage({super.key, required this.title});
-
-  // This widget is the home page of your application. It is stateful, meaning
-  // that it has a State object (defined below) that contains fields that affect
-  // how it looks.
-
-  // This class is the configuration for the state. It holds the values (in this
-  // case the title) provided by the parent (in this case the App widget) and
-  // used by the build method of the State. Fields in a Widget subclass are
-  // always marked "final".
-
-  final String title;
+  const MyHomePage({super.key});
 
   @override
-  State<MyHomePage> createState() => _MyHomePageState();
+  State<MyHomePage> createState() => MyHomePageState();
 }
 
-class _MyHomePageState extends State<MyHomePage> {
+class MyHomePageState extends State<MyHomePage> {
+  static final int tiles_x = 30;
+  static final int tiles_y = 30;
+
+  Game? game;
+
+  String gameText = "";
+  var loading = true;
+  var islands = <Island>[];
+  List<Tile?> tiles = List.filled(tiles_x * tiles_y, null);
+
+  void updateText(String text) {
+    setState(() {
+      gameText = text;
+    });
+  }
+
   @override
   void initState() {
     super.initState();
-    _init().then((value) => print("done"));
+    init();
+  }
+
+  void init() {
+    gameText = "Attempts left: 3";
+    game = Game(this);
+    for (var island in islands) {
+      island.dispose();
+    }
+    _init().then((value) {
+      setState(() {
+        loading = false;
+      });
+    });
   }
 
   Future<void> _init() async {
@@ -70,16 +74,119 @@ class _MyHomePageState extends State<MyHomePage> {
     HttpClientRequest request = await client.getUrl(
         Uri.parse("https://jobfair.nordeus.com/jf24-fullstack-challenge/test"));
     HttpClientResponse response = await request.close();
-    String responseBody = await response.transform(Utf8Decoder()).join();
-    print(responseBody);
+    String responseBody = await response.transform(const Utf8Decoder()).join();
+
+    List<List<int>> map = List.generate(30, (_) => List.filled(30, 0));
+
+    List<String> lines = responseBody.split("\n");
+    debugPrint("Lines len ${lines.length}");
+    for (int i = 0; i < lines.length; i++) {
+      var split = lines[i].split(" ");
+      for (int j = 0; j < split.length; j++) {
+        map[i][j] = (int.parse(split[j]));
+      }
+    }
+
+    List<List<bool>> visited = List.generate(30, (_) => List.filled(30, false));
+    debugPrint(map.toString());
+
+    islands.clear();
+    Island? max;
+
+    for (int i = 0; i < tiles_x; i++) {
+      for (int j = 0; j < tiles_y; j++) {
+        if (visited[i][j]) {
+          continue;
+        }
+        if (map[i][j] == 0) {
+          visited[i][j] = true;
+          Tile tile = Tile(height: 0, island: null);
+          tiles[i * tiles_x + j] = tile;
+          continue;
+        }
+        var island = Island(game!);
+        var queue = <List<int>>[];
+        queue.add([i, j]);
+        while (queue.isNotEmpty) {
+          var current = queue.removeAt(0);
+          var x = current[0];
+          var y = current[1];
+          if (x < 0 || x >= tiles_x || y < 0 || y >= tiles_y) {
+            continue;
+          }
+          if (visited[x][y]) {
+            continue;
+          }
+          if (map[x][y] == 0) {
+            continue;
+          }
+          visited[x][y] = true;
+          Tile tile = Tile(height: map[x][y], island: island);
+          island.tiles.add(tile);
+          tiles[x * tiles_x + y] = tile;
+          queue.add([x + 1, y]);
+          queue.add([x - 1, y]);
+          queue.add([x, y + 1]);
+          queue.add([x, y - 1]);
+          debugPrint("Parsed tile at $x, $y with height ${map[x][y]}");
+        }
+        island.calculateAverageHeight();
+        islands.add(island);
+        if (max == null || island.averageHeight > max.averageHeight) {
+          max = island;
+        }
+      }
+    }
+    max!.setSuccess(true);
   }
 
   @override
   Widget build(BuildContext context) {
+    if (loading) {
+      return const Scaffold(
+        body: Center(
+          child: CircularProgressIndicator(),
+        ),
+      );
+    }
+    double screenWidth = MediaQuery.sizeOf(context).width;
+    double screenHeight = MediaQuery.sizeOf(context).height;
+
+    double boxwidth = min(screenWidth, screenHeight) * 0.8;
+
+    double left = (screenWidth - boxwidth) / 2;
+    double top = (screenHeight - boxwidth) / 2;
+    double right = (screenWidth - boxwidth) / 2;
+    double bottom = (screenHeight - boxwidth) / 8;
+
     return Scaffold(
-      body: Center(
-        child: Text("Hello World"),
-      ),
-    );
+        body: Center(
+      child: ListView(children: <Widget>[
+        GridView.count(
+          padding: EdgeInsets.fromLTRB(left, top, right, bottom),
+          shrinkWrap: true,
+          crossAxisCount: 30,
+          children: List.generate(tiles_x * tiles_y, (index) {
+            return tiles[index]!;
+          }),
+        ),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: <Widget>[
+            Text(gameText),
+            gameText == "You win!" || gameText == "Game over!"
+                ? TextButton(
+                    onPressed: () {
+                      setState(() {
+                        loading = true;
+                      });
+                      init();
+                    },
+                    child: Text("Restart"))
+                : Text("")
+          ],
+        ),
+      ]),
+    ));
   }
 }
