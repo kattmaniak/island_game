@@ -74,6 +74,7 @@ class Island {
   void dispose() {
     _ticker?.stop();
     _ticker?.dispose();
+    tiles.clear();
   }
 
   void setSuccess(bool success) {

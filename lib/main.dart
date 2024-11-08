@@ -21,7 +21,7 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       title: 'Island Game',
       theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
+        colorScheme: ColorScheme.fromSeed(seedColor: Colors.blue),
         useMaterial3: true,
       ),
       home: const MyHomePage(),
@@ -43,6 +43,8 @@ class MyHomePageState extends State<MyHomePage> {
   Game? game;
 
   String gameText = "";
+  int score = 0;
+  int highScore = 0;
   var loading = true;
   var started = false;
   var randmap = false;
@@ -58,6 +60,7 @@ class MyHomePageState extends State<MyHomePage> {
   @override
   void initState() {
     super.initState();
+    game = Game(this);
   }
 
   Future<void> init() async {
@@ -67,7 +70,7 @@ class MyHomePageState extends State<MyHomePage> {
       island.dispose();
     }
     islands.clear();
-    game = Game(this);
+    game!.reInit();
     _init().then((value) {
       setState(() {
         loading = false;
@@ -88,7 +91,11 @@ class MyHomePageState extends State<MyHomePage> {
         responseBody = await http.read(Uri.parse("https://corsproxy.io/?https%3A%2F%2Fjobfair.nordeus.com%2Fjf24-fullstack-challenge%2Ftest%2F"));
       }
     }else{
-      var res2 = await http.read(Uri.parse("https://corsproxy.io/?"));
+      // ignore: unused_local_variable
+      try {
+        var res2 = await http.read(Uri.parse("http://localhost:1234"));
+      } catch (e) {
+      }
       
       final noise = perlin2d(width: tiles_x~/5, height: tiles_y~/5, frequency: 5, seed: Random().nextInt(2048));
       debugPrint(noise.length.toString());
@@ -188,14 +195,18 @@ class MyHomePageState extends State<MyHomePage> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            FilledButton(onPressed: (){
-              setState(() {
-                loading = true;
-                started = true;
-              });
-              init();
-            }, child: 
-              Text("Play")
+            Padding(
+              padding: const EdgeInsets.all(10.0),
+              child: FilledButton(
+                onPressed: (){
+                setState(() {
+                  loading = true;
+                  started = true;
+                });
+                init();
+              }, child: 
+                Text("Play")
+              ),
             ),
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
@@ -204,7 +215,13 @@ class MyHomePageState extends State<MyHomePage> {
                 Switch(
                   value: randmap, 
                   onChanged: (value){
-                    setState(() {randmap = value;});
+                    setState(() {
+                      randmap = value;
+                      if(!randmap){
+                        tiles_x = 30;
+                        tiles_y = 30;
+                      }
+                    });
                   }
                 ),
               ],
@@ -248,13 +265,23 @@ class MyHomePageState extends State<MyHomePage> {
     double boxwidth = min(screenWidth, screenHeight) * 0.8;
 
     double left = (screenWidth - boxwidth) / 2;
-    double top = (screenHeight - boxwidth) / 2;
+    double top = (screenHeight - boxwidth) / 16;
     double right = (screenWidth - boxwidth) / 2;
-    double bottom = (screenHeight - boxwidth) / 8;
+    double bottom = (screenHeight - boxwidth) / 16;
 
     return Scaffold(
         body: Center(
       child: ListView(children: <Widget>[
+        Padding(
+              padding: EdgeInsets.fromLTRB(10, top*4, 10, 0),
+              child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: <Widget>[
+            Text("Score: $score     "),
+            Text("High score: $highScore"),
+          ],
+              ),
+        ),
         GridView.count(
           padding: EdgeInsets.fromLTRB(left, top, right, bottom),
           shrinkWrap: true,
@@ -266,18 +293,47 @@ class MyHomePageState extends State<MyHomePage> {
         Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: <Widget>[
-            Text(gameText),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(10, 0, 10, 0),
+              child: Text(gameText),
+            ),
+            if(game!.isFinished()) FilledButton(
+              style: ButtonStyle(
+                padding: WidgetStateProperty.all<EdgeInsetsGeometry>(const EdgeInsets.fromLTRB(10, 0, 10, 0))
+              ),
+              onPressed: () {
+                setState(() {
+                  loading = true;
+                });
+                init();
+              },
+              child: Text("Play again")),
             if(game!.isFinished()) TextButton(
-                    onPressed: () {
-                      setState(() {
-                        loading = true;
-                      });
-                      init();
-                    },
-                    child: Text("Restart"))
+              onPressed: () {
+                for (var island in islands) {
+                  island.dispose();
+                }
+                game?.setScore(0);
+                setState(() {
+                  started = false;
+                });
+              },
+              child: Text("Main menu")),
           ],
         ),
       ]),
     ));
+  }
+
+  void updateScore(int score) {
+    setState(() {
+      this.score = score;
+    });
+  }
+
+  void updateHighScore(int highScore) {
+    setState(() {
+      this.highScore = highScore;
+    });
   }
 }
