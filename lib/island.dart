@@ -56,8 +56,8 @@ class Island {
       return;
     }
     _tapped = true;
-    _game.useAttempt();
-    if (_success) _game.setSuccess(true);
+    if (_success) _game.setSuccess(true); 
+    else _game.useAttempt();
     _ticker = Ticker((Duration elapsed) {
       _currentTime = elapsed;
       for (var tile in tiles) {
