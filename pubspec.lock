@@ -235,6 +235,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "1.9.0"
+  perlin:
+    dependency: "direct main"
+    description:
+      name: perlin
+      sha256: a218e209ad9f364932cacaafea9e0d84eebc3ec1375c9895e56f849939e24b70
+      url: "https://pub.dev"
+    source: hosted
+    version: "1.1.0+1"
   petitparser:
     dependency: transitive
     description:

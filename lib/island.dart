@@ -30,6 +30,27 @@ class Island {
     return _averageHeight;
   }
 
+  void reveal() {
+    for (var tile in tiles) {
+      tile.setXY(0, 0);
+    }
+    _ticker = Ticker((Duration elapsed) {
+      if(_currentTime.inSeconds < elapsed.inSeconds){
+        if(elapsed.inMilliseconds % 1000 < 500){
+          for (var tile in tiles) {
+            tile.setTime(Duration(seconds: 1000));
+          }
+        } else {
+          for (var tile in tiles) {
+            tile.setTime(Duration.zero);
+            _currentTime = elapsed;
+          }
+        }
+      }
+    });
+    _ticker!.start();
+  }
+
   void tapped(double x, double y) {
     if (_game.isFinished() || _tapped) {
       return;

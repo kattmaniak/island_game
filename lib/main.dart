@@ -8,6 +8,7 @@ import 'package:flutter/material.dart';
 import 'game.dart';
 import 'island.dart';
 import 'tile.dart';
+import 'package:perlin/perlin.dart';
 
 void main() {
   runApp(const MyApp());
@@ -36,13 +37,15 @@ class MyHomePage extends StatefulWidget {
 }
 
 class MyHomePageState extends State<MyHomePage> {
-  static final int tiles_x = 30;
-  static final int tiles_y = 30;
+  static int tiles_x = 30;
+  static int tiles_y = 30;
 
   Game? game;
 
   String gameText = "";
   var loading = true;
+  var started = false;
+  var randmap = false;
   var islands = <Island>[];
   List<Tile?> tiles = List.filled(tiles_x * tiles_y, null);
 
@@ -55,38 +58,67 @@ class MyHomePageState extends State<MyHomePage> {
   @override
   void initState() {
     super.initState();
-    init();
   }
 
-  void init() {
+  Future<void> init() async {
+    tiles = List.filled(tiles_x * tiles_y, null);
     gameText = "Attempts left: 3";
-    game = Game(this);
     for (var island in islands) {
       island.dispose();
     }
+    islands.clear();
+    game = Game(this);
     _init().then((value) {
       setState(() {
         loading = false;
       });
     });
   }
+  
+  Future<String> initMap() async {
+    String responseBody = "";
+    if(!randmap){
+      if(!kIsWeb) {
+        var client = HttpClient();
+        HttpClientRequest request = await client.getUrl(
+            Uri.parse("https://jobfair.nordeus.com/jf24-fullstack-challenge/test"));
+        HttpClientResponse response = await request.close();
+        responseBody = await response.transform(const Utf8Decoder()).join();
+      } else {
+        responseBody = await http.read(Uri.parse("https://corsproxy.io/?https%3A%2F%2Fjobfair.nordeus.com%2Fjf24-fullstack-challenge%2Ftest%2F"));
+      }
+    }else{
+      var res2 = await http.read(Uri.parse("https://corsproxy.io/?"));
+      
+      final noise = perlin2d(width: tiles_x~/5, height: tiles_y~/5, frequency: 5, seed: Random().nextInt(2048));
+      debugPrint(noise.length.toString());
+      for(int i = 0; i < tiles_x; i++){
+        for(int j = 0; j < tiles_y; j++){
+          double value = noise[i][j];
+          int height = (value * 1200).toInt();
+          if(height < 200){
+            height = 0;
+          } else {
+            height = height - 200;
+          }
+          responseBody += "$height ";
+        }
+        responseBody = responseBody.trim();
+        responseBody += "\n";
+      }
+      responseBody = await responseBody.trim();
+    }
+    return responseBody;
+  }
 
   Future<void> _init() async {
     String responseBody;
-    if(!kIsWeb) {
-      var client = HttpClient();
-      HttpClientRequest request = await client.getUrl(
-          Uri.parse("https://jobfair.nordeus.com/jf24-fullstack-challenge/test"));
-      HttpClientResponse response = await request.close();
-      responseBody = await response.transform(const Utf8Decoder()).join();
-    } else {
-      responseBody = await http.read(Uri.parse("https://corsproxy.io/?https%3A%2F%2Fjobfair.nordeus.com%2Fjf24-fullstack-challenge%2Ftest%2F"));
-    }
+    responseBody = await initMap();
 
-    List<List<int>> map = List.generate(30, (_) => List.filled(30, 0));
+    List<List<int>> map = List.generate(tiles_y, (_) => List.filled(tiles_x, 0));
 
     List<String> lines = responseBody.split("\n");
-    debugPrint("Lines len ${lines.length}");
+    //debugPrint("Lines len ${lines.length}");
     for (int i = 0; i < lines.length; i++) {
       var split = lines[i].split(" ");
       for (int j = 0; j < split.length; j++) {
@@ -94,8 +126,8 @@ class MyHomePageState extends State<MyHomePage> {
       }
     }
 
-    List<List<bool>> visited = List.generate(30, (_) => List.filled(30, false));
-    debugPrint(map.toString());
+    List<List<bool>> visited = List.generate(tiles_y, (_) => List.filled(tiles_x, false));
+    //debugPrint(map.toString());
 
     islands.clear();
     Island? max;
@@ -135,7 +167,7 @@ class MyHomePageState extends State<MyHomePage> {
           queue.add([x - 1, y]);
           queue.add([x, y + 1]);
           queue.add([x, y - 1]);
-          debugPrint("Parsed tile at $x, $y with height ${map[x][y]}");
+          //debugPrint("Parsed tile at $x, $y with height ${map[x][y]}");
         }
         island.calculateAverageHeight();
         islands.add(island);
@@ -145,17 +177,71 @@ class MyHomePageState extends State<MyHomePage> {
       }
     }
     max!.setSuccess(true);
+    game!.setWisland(max);
   }
 
   @override
   Widget build(BuildContext context) {
-    if (loading) {
+    if (!started) {
+    return Scaffold(
+      body: Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            FilledButton(onPressed: (){
+              setState(() {
+                loading = true;
+                started = true;
+              });
+              init();
+            }, child: 
+              Text("Play")
+            ),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                const Text("Random maps"),
+                Switch(
+                  value: randmap, 
+                  onChanged: (value){
+                    setState(() {randmap = value;});
+                  }
+                ),
+              ],
+            ),
+            if(randmap)
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const Text("Map size"),
+                  Slider(
+                    min: 30.0,
+                    max: 100.0,
+                    divisions: 7,
+                    value: tiles_x.toDouble(), 
+                    onChanged: (value){
+                      setState(() {
+                        tiles_x = value.toInt();
+                        tiles_y = value.toInt();
+                      });
+                    }
+                  ),
+                  Text("${tiles_x}x$tiles_y"),
+                ],
+              )
+          ],
+        )
+      ),
+    );
+    }
+    if(loading){
+      debugPrint("Loading");
       return const Scaffold(
         body: Center(
-          child: CircularProgressIndicator(),
+          child: CircularProgressIndicator()
         ),
       );
-    }
+     }
     double screenWidth = MediaQuery.sizeOf(context).width;
     double screenHeight = MediaQuery.sizeOf(context).height;
 
@@ -172,7 +258,7 @@ class MyHomePageState extends State<MyHomePage> {
         GridView.count(
           padding: EdgeInsets.fromLTRB(left, top, right, bottom),
           shrinkWrap: true,
-          crossAxisCount: 30,
+          crossAxisCount: tiles_x,
           children: List.generate(tiles_x * tiles_y, (index) {
             return tiles[index]!;
           }),
@@ -181,8 +267,7 @@ class MyHomePageState extends State<MyHomePage> {
           mainAxisAlignment: MainAxisAlignment.center,
           children: <Widget>[
             Text(gameText),
-            gameText == "You win!" || gameText == "Game over!"
-                ? TextButton(
+            if(game!.isFinished()) TextButton(
                     onPressed: () {
                       setState(() {
                         loading = true;
@@ -190,7 +275,6 @@ class MyHomePageState extends State<MyHomePage> {
                       init();
                     },
                     child: Text("Restart"))
-                : Text("")
           ],
         ),
       ]),
