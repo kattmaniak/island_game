@@ -1,0 +1,44 @@
+Description of bugs that came up:
+1. Bug: Game crashed on "play again"
+    - Noticed: The application threw a "set state after disposed from widget tree" exception.
+    - Fixed: Disposed of tiles while reinitializing the game state.
+
+2. Bug: Random maps caused the game to not display the loading spinner and freeze after pressing "play again"
+    - Noticed: The game would freeze without an exception being thrown after pressing "play again" and stay stuck on the last map
+    - Fixed: Added an impossible http get in a try/catch to try and simulate the alternative api maps fetch, and it works? good enough for me
+
+3. Bug: Android application in release didn't load properly
+    - Noticed: After installing the apk on my phone and opening it, the loading spinner was infinitely spinning
+    - Fixed: Added INTERNET permission in android main manifest (why is it added in debug by default but not in main?)
+
+
+Ways you would test the projects of other contestants:
+1. Functional Testing:
+    - Check that the game correctly identifies the island with the highest average height.
+    - Ensure that the game ends and displays the correct result when the player runs out of attempts.
+
+2. UI Testing:
+    - Verify that the UI updates correctly when the game state changes.
+    - Check the layout and appearance of the UI on different screen sizes and orientations.
+
+3. Performance Testing:
+    - Test the performance of the game with different configurations.
+    - Check for any memory leaks or excessive resource usage.
+
+
+Improvements/features you would make if you had a magic wand (able to do anything you wish for):
+1. Add multiplayer support to allow players to compete against each other.
+2. Implement different difficulty levels with varying map sizes and complexities.
+3. Add animations and sound effects to enhance the user experience.
+4. Implement a leaderboard to track and display the top scores of players.
+
+
+Think of how some factors could affect your solution (e.g. map size, number of lives…):
+1. Map Size:
+    - Larger map sizes do increase the loading time and memory usage, and make performance significantly worse on lower-end devices.
+
+2. Number of Lives:
+    - Increasing the number of lives could make the game easier and less challenging.
+
+3. Device Performance:
+    - Optimization techniques might be needed to ensure smooth performance on lower-end devices.

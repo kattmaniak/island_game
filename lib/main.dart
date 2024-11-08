@@ -195,6 +195,8 @@ class MyHomePageState extends State<MyHomePage> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
+            Text("Island Game", style: Theme.of(context).textTheme.displayMedium),
+            Text("Guess the island with the highest average height", style: Theme.of(context).textTheme.bodyMedium),
             Padding(
               padding: const EdgeInsets.all(10.0),
               child: FilledButton(
