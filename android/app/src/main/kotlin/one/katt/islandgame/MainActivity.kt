@@ -1,4 +1,4 @@
-package com.example.island_game
+package one.katt.islandgame
 
 import io.flutter.embedding.android.FlutterActivity
 
