@@ -39,6 +39,7 @@ dependencies:
   http: ^1.2.2
   perlin: ^1.1.0+1
   shared_preferences: ^2.3.2
+  
 
 dev_dependencies:
   flutter_test:

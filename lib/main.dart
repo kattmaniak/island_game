@@ -93,8 +93,9 @@ class MyHomePageState extends State<MyHomePage> {
     }else{
       // ignore: unused_local_variable
       try {
-        var res2 = await http.read(Uri.parse("http://localhost:1234"));
+        var res2 = await Future.delayed(Duration(milliseconds: 1), () => {""});
       } catch (e) {
+        // do nothing
       }
       
       final noise = perlin2d(width: tiles_x~/5, height: tiles_y~/5, frequency: 5, seed: Random().nextInt(2048));

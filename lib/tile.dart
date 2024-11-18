@@ -12,7 +12,7 @@ class Tile extends StatefulWidget {
   final Island? island;
   _TileState? state;
 
-  void setTime(Duration time) {
+  Future<void> setTime(Duration time) async {
     state!.setTime(time);
   }
 
@@ -148,6 +148,6 @@ class TilePainter extends CustomPainter {
 
   @override
   bool shouldRepaint(covariant CustomPainter oldDelegate) {
-    return true;
+    return success || currentTime != Duration.zero;
   }
 }
