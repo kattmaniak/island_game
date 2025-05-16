@@ -47,7 +47,7 @@ class MyHomePageState extends State<MyHomePage> {
   int highScore = 0;
   var loading = true;
   var started = false;
-  var randmap = false;
+  var randmap = true;
   var islands = <Island>[];
   List<Tile?> tiles = List.filled(tiles_x * tiles_y, null);
 
@@ -80,43 +80,28 @@ class MyHomePageState extends State<MyHomePage> {
   
   Future<String> initMap() async {
     String responseBody = "";
-    if(!randmap){
-      if(!kIsWeb) {
-        var client = HttpClient();
-        HttpClientRequest request = await client.getUrl(
-            Uri.parse("https://jobfair.nordeus.com/jf24-fullstack-challenge/test"));
-        HttpClientResponse response = await request.close();
-        responseBody = await response.transform(const Utf8Decoder()).join();
-      } else {
-        responseBody = await http.read(Uri.parse("https://corsproxy.io/?https%3A%2F%2Fjobfair.nordeus.com%2Fjf24-fullstack-challenge%2Ftest%2F"));
-      }
-    }else{
-      // ignore: unused_local_variable
-      try {
-        var res2 = await Future.delayed(Duration(milliseconds: 1), () => {""});
-      } catch (e) {
-        // do nothing
-      }
-      
-      final noise = perlin2d(width: tiles_x~/5, height: tiles_y~/5, frequency: 5, seed: Random().nextInt(2048));
-      debugPrint(noise.length.toString());
-      for(int i = 0; i < tiles_x; i++){
-        for(int j = 0; j < tiles_y; j++){
-          double value = noise[i][j];
-          int height = (value * 1200).toInt();
-          if(height < 200){
-            height = 0;
-          } else {
-            height = height - 200;
-          }
-          responseBody += "$height ";
+
+    final noise = perlin2d(width: tiles_x~/5, height: tiles_y~/5, frequency: 5, seed: Random().nextInt(2048));
+    await Future.delayed(Duration.zero); // yield to let the UI update
+
+    for(int i = 0; i < tiles_x; i++){
+      await Future.delayed(Duration.zero);
+      for(int j = 0; j < tiles_y; j++){
+        double value = noise[i][j];
+        int height = (value * 1200).toInt();
+        if(height < 200){
+          height = 0;
+        } else {
+          height = height - 200;
         }
-        responseBody = responseBody.trim();
-        responseBody += "\n";
+        responseBody += "$height ";
       }
-      responseBody = await responseBody.trim();
+      responseBody = responseBody.trim();
+      responseBody += "\n";
     }
-    return responseBody;
+    responseBody = responseBody.trim();
+
+    return Future.delayed(Duration.zero, () => responseBody);
   }
 
   Future<void> _init() async {
@@ -141,6 +126,7 @@ class MyHomePageState extends State<MyHomePage> {
     Island? max;
 
     for (int i = 0; i < tiles_x; i++) {
+      await Future.delayed(Duration.zero);
       for (int j = 0; j < tiles_y; j++) {
         if (visited[i][j]) {
           continue;
@@ -211,24 +197,6 @@ class MyHomePageState extends State<MyHomePage> {
                 Text("Play")
               ),
             ),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                const Text("Random maps"),
-                Switch(
-                  value: randmap, 
-                  onChanged: (value){
-                    setState(() {
-                      randmap = value;
-                      if(!randmap){
-                        tiles_x = 30;
-                        tiles_y = 30;
-                      }
-                    });
-                  }
-                ),
-              ],
-            ),
             if(randmap)
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
@@ -255,7 +223,6 @@ class MyHomePageState extends State<MyHomePage> {
     );
     }
     if(loading){
-      debugPrint("Loading");
       return const Scaffold(
         body: Center(
           child: CircularProgressIndicator()

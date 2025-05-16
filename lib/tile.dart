@@ -124,10 +124,10 @@ class TilePainter extends CustomPainter {
 
   @override
   void paint(Canvas canvas, Size size) {
-    shader.setFloat(0, color.red / 255);
-    shader.setFloat(1, color.green / 255);
-    shader.setFloat(2, color.blue / 255);
-    shader.setFloat(3, color.alpha / 255);
+    shader.setFloat(0, color.r);
+    shader.setFloat(1, color.g);
+    shader.setFloat(2, color.b);
+    shader.setFloat(3, color.a);
 
     shader.setFloat(4, x);
     shader.setFloat(5, y);

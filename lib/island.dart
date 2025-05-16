@@ -56,13 +56,18 @@ class Island {
       return;
     }
     _tapped = true;
-    if (_success) _game.setSuccess(true); 
-    else _game.useAttempt();
+    if (_success) {
+      _game.setSuccess(true);
+    } else {
+      _game.useAttempt();
+    }
+    for (var tile in tiles) {
+      tile.setXY(x, y);
+    }
     _ticker = Ticker((Duration elapsed) {
       _currentTime = elapsed;
       for (var tile in tiles) {
         tile.setTime(_currentTime);
-        tile.setXY(x, y);
       }
       if (_currentTime.inSeconds >= 10) {
         _ticker!.stop();

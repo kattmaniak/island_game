@@ -9,7 +9,6 @@ uniform vec2 offset;
 out vec4 fragColor;
 
 void main() {
-    bool success = successf > 0.5;
     if(time == 0.0) {
         fragColor = color;
         return;
@@ -17,18 +16,12 @@ void main() {
     vec2 pos = FlutterFragCoord().xy + offset;
     vec2 dir = pos - startpos;
     float dist = length(dir);
+
     if(time/dist < 0.01){
         fragColor = color;
         return;
     }
-    fragColor = color;
-    if(success){
-        fragColor.g = 1.0;
-        fragColor.b = color.b * 0.6;
-        fragColor.r = color.r * 0.6;
-    } else {
-        fragColor.r = 1.0;
-        fragColor.g = color.g * 0.6;
-        fragColor.b = color.b * 0.6;
-    }
+
+    vec4 resultColor = mix(vec4(1.0, 0.0, 0.0, 1.0), vec4(0.0, 1.0, 0.0, 1.0), successf);
+    fragColor = mix(resultColor, color, 0.2);
 }
